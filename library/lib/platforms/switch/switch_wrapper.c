@@ -48,10 +48,18 @@ void userAppInit()
 {
     printf("userAppInit\n");
     appletLockExit();
+
+    // Override the applet type, which controls what subservice of nvdrv gets initialized
+    // To get access to /dev/nvhost-nvjpg, we need nvdrv:a/s/t
+    extern u32 __nx_applet_type;
+    AppletType saved_applet_type = __nx_applet_type;
+    __nx_applet_type = AppletType_LibraryApplet;
+    nvInitialize();
+    __nx_applet_type = saved_applet_type;
+
+    // Init network
     SocketInitConfig cfg = *(socketGetDefaultInitConfig());
-
     cfg.bsd_service_type = BsdServiceType_System;
-
     AppletType at = appletGetAppletType();
     if (at == AppletType_Application || at == AppletType_SystemApplication)
     {
@@ -101,4 +109,6 @@ void userAppExit()
         close(nxlink_sock);
 
     socketExit();
+
+    nvExit();
 }
